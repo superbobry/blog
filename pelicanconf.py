@@ -3,20 +3,28 @@
 from __future__ import unicode_literals
 
 AUTHOR = "Sergei Lebedev"
-SITEURL = ""
+SITEURL = "https://superbobry.github.io"
 SITENAME = "The blog"
 SITETITLE = "Hi."
 SITESUBTITLE = " ".join([
     "I am Sergei Lebedev.",
-    "I am a machine learning engineer at <a href='https://criteo.com'>Criteo.</a>",
+    "I am a machine learning engineer at <a href='https://criteo.com'>Criteo</a>.",
     "This is my blog."
 ])
 SITEDESCRIPTION = "Sergei Lebedev's Thoughts and Writings"
-SITELOGO = "https://pbs.twimg.com/profile_images/664519682137960448/LCW2x5sj_400x400.jpg"
+SITELOGO = "static/picture.jpg"
 BROWSER_COLOR = "#333"
 PYGMENTS_STYLE = "default"
 
-MAIN_MENU = False
+RELATIVE_URLS = True
+
+MAIN_MENU = True
+SOCIAL = [
+    ("github", "https://github.com/superbobry"),
+    ("twitter", "https://twitter.com/superbobry"),
+]
+
+DISQUS_SITENAME = "superbobry"
 
 THEME = "flex"
 PATH = "content"
@@ -33,5 +41,8 @@ DATE_FORMATS = {
 }
 
 COPYRIGHT_YEAR = 2018
+
+STATIC_PATHS = ["static"]
+CUSTOM_CSS = "static/custom.css"
 
 DEFAULT_PAGINATION = 10

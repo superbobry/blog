@@ -1,4 +1,4 @@
-Title: PySpark silently brakes your namedtuples
+Title: PySpark silently breaks your namedtuples
 Date: 2018-02-23
 Category: spark, python, rant
 
@@ -113,8 +113,8 @@ the old-school `print` debugging strategy.
 Down the `print` hole
 ---------------------
 
-The `AttributeError` we got clearly indicates the cause of the failure -- the
-`combine` method is not there. What if PySpark somehow transformed the
+The `AttributeError` we just got clearly indicates the cause of the failure --
+the `combine` method is not there. What if PySpark somehow transformed the
 `Summary`, so that the executors actually got a different `Summary` class? As
 crazy at it sounds it's worth checking out.
 
