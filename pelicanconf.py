@@ -16,9 +16,17 @@ SITELOGO = "static/picture.jpg"
 BROWSER_COLOR = "#333"
 PYGMENTS_STYLE = "default"
 
+ROBOTS = "index, follow"
+
+CC_LICENSE = {
+    "name": "Creative Commons Attribution-ShareAlike",
+    "version": "4.0",
+    "slug": "by-sa"
+}
+
 RELATIVE_URLS = True
 
-MAIN_MENU = True
+MAIN_MENU = False
 SOCIAL = [
     ("github", "https://github.com/superbobry"),
     ("twitter", "https://twitter.com/superbobry"),
