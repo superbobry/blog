@@ -1,0 +1,23 @@
+language: python
+python:
+- '3.6'
+branches:
+  only:
+  - master
+install:
+- pip install -r requirements.txt
+- git clone https://github.com/getpelican/pelican-themes
+- pushd pelican-themes && git submodule init && git submodule update Flex && popd
+- pelican-themes --install pelican-themes/Flex
+script:
+- make publish
+
+deploy:
+  provider: pages
+  repo: superbobry/superbobry.github.io
+  target_branch: master
+  skip_cleanup: true
+  github_token: $GITHUB_TOKEN
+  local_dir: output
+  on:
+    branch: master

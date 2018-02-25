@@ -32,9 +32,7 @@ SOCIAL = [
     ("twitter", "https://twitter.com/superbobry"),
 ]
 
-DISQUS_SITENAME = "superbobry"
-
-THEME = "flex"
+THEME = "Flex"
 PATH = "content"
 
 TIMEZONE = "Europe/Paris"
@@ -53,4 +51,6 @@ COPYRIGHT_YEAR = 2018
 STATIC_PATHS = ["static"]
 CUSTOM_CSS = "static/custom.css"
 
-DEFAULT_PAGINATION = 10
+FEED_ATOM = FEED_RSS = None
+
+SUMMARY_MAX_LENGTH = -1
