@@ -1,5 +1,5 @@
 Title: PySpark silently breaks your namedtuples
-Date: 2018-02-23
+Date: 2018-02-25
 Category: spark, python, rant
 
 **tl;dr** you might want to stay away from using namedtuple with custom
@@ -12,11 +12,11 @@ Introduction
 framework. It allows to write Spark applications in pure Python handling the
 Python⇄JVM interop transparently behind the scenes. In this short writeup
 we are going to explore a peculiar quirk in the current (2.2.1) PySpark
-implementation -- namedtuple serialization.
+implementation &mdash; namedtuple serialization.
 
 [`collections.namedtuple`][namedtuple] is a concise way of defining *data
-classes*, that is classes whose sole purpose is storing a bunch of
-attributes. For example,
+classes*, that is immutable classes whose sole purpose is storing a bunch of
+values. For example,
 
 ```python
 from collections import namedtuple
@@ -26,7 +26,8 @@ Summary = namedtuple("Summary", ["min", "max"])
 
 defines the `Summary` class with two attributes `min` and `max`. The class comes
 with a constructor, equality/comparison methods, `__hash__`, `__str__`,
-`__repr__` etc. Compare this to the equivalent `class` version
+`__repr__` etc. Compare this to the equivalent (modulo mutability) `class`
+version
 
 ```python
 from functools import total_ordering
@@ -49,21 +50,22 @@ class Summary:
 ```
 
 Replacing all this boilerplate with just a single line is so convenient that
-people often use `namedtuple` to create a base class and then add their methods
-on top. In case of `Summary` we could, for instance, define a method `combine`,
+people often use `namedtuple` to create a base class and then add some methods
+on top. In case of `Summary`, we could, for example, define a method `combine`,
 combining two instances into a single one:
 
 ```python
 class Summary(namedtuple("Summary", ["min", "max"])):
     def combine(self, other):
-        return Summary(min(self.min, other.min), max(self.max, other.max))
+        return Summary(min(self.min, other.min),
+                       max(self.max, other.max))
 ```
 
-Newer Python versions (≥ 3.6) come with a different way to define namedtuples --
-`typing.NamedTuple`. Unlike the `collections` one, it uses a more natural
-class-based syntax and therefore does not require an extra layer of inheritance
-to be able to define methods. In the following we'll be using the `typing`
-powered implementation of `Summary`.
+Newer Python versions (≥ 3.6) come with a different way to define namedtuples
+&mdash; `typing.NamedTuple`. Unlike the `collections` one, it uses a more
+natural class-based syntax and therefore does not require an extra layer of
+inheritance to define methods. In the following, we'll be using the
+`typing` powered implementation of `Summary`.
 
 ```python
 import typing
@@ -76,7 +78,7 @@ class Summary(typing.NamedTuple):
         return Summary(min(self.min, other.min), max(self.max, other.max))
 ```
 
-namedtuples are widespread in the Python ecosystem. Pretty much every Python
+Namedtuples are widespread in the Python ecosystem. Pretty much every Python
 project has at least a single namedtuple either defined directly in the project
 or coming from third-party libraries ([including][cpython-namedtuple] the
 standard library).
@@ -105,18 +107,25 @@ Traceback (most recent call last):
 AttributeError: 'Summary' object has no attribute 'combine'
 ```
 
-Ooops. What happened here? The `Summary` class must have the `combine` method,
-after all, we have just defined it, but for some reason it is not available
-to PySpark. What could've gone wrong? To answer this question we'd resort to
-the old-school `print` debugging strategy.
+Oops. What happened here? The `Summary` class must have the `combine` method,
+after all, we have just defined it...
+
+```python
+>>> rdd.map(lambda s: "combine" in dir(s)).collect()
+[False, False]
+```
+
+yet for some reason, it is not available to PySpark. What could've gone wrong?
+To answer this question we'd resort to the old-school `print` debugging
+strategy.
 
 Down the `print` hole
 ---------------------
 
-The `AttributeError` we just got clearly indicates the cause of the failure --
-the `combine` method is not there. What if PySpark somehow transformed the
-`Summary`, so that the executors actually got a different `Summary` class? As
-crazy at it sounds it's worth checking out.
+The `AttributeError` we just got clearly indicates the cause of the failure
+&mdash; the `combine` method is not there. What if PySpark somehow transformed
+the `Summary` class, so that the executors actually got its different version?
+As crazy as it sounds it's worth checking out.
 
 ```python
 def print_and_combine(s1, s2):
@@ -136,14 +145,14 @@ AttributeError: 'Summary' object has no attribute 'combine'
 ```
 
 Hmmm... not getting any better, `collections.Summary`? What is this
-`collections` module? We never created one, and even if we did, the `Summary`
-class has been defined in the interpreter and therefore should have `__main__`
+`collections` module? We never created one, and even if had, the `Summary` class
+had been defined in the interpreter and therefore should have `__main__`
 as its module. So, what's going on?
 
 I must warn you, the answer is not pretty.
 
 To execute `rdd.reduce` call PySpark creates a task (in fact multiple tasks) for
-each RDD partition. The tasks would then be serialized and sent to the executors
+each RDD partition. The tasks are then serialized and sent to the executors
 to be executed. The default serializer in PySpark is
 [`PickleSerializer`][pickle-serializer]
 which delegates all of the work to the infamous `pickle` module. The pickle
@@ -161,7 +170,7 @@ b'\x80\x03c__main__\nSummary\nq\x00K\x00K\x00\x86q\x01\x81q\x02.'
 
 The problem with the default mechanism in the PySpark case is that in
 order to unpickle `Summary` on the executors we need the `Summary` class to be
-defined int the `__main__` module within the executors' interpreter. This is
+defined in the `__main__` module within the executors' interpreter. This is
 where things get dirty. In fact, the above snippet was produced outside of
 PySpark. If you run it on the PySpark driver you'd get a different output
 
@@ -173,14 +182,14 @@ b'\x80\x03cpyspark.serializers\n_restore\nq\x00X\x05\x00\x00\x00Summaryq\x01X\x0
 
 WAT. WAT? WAT!
 
-The Truth
+The patch
 ---------
 
 At import time PySpark
-[*patches*][pyspark-namedtuple]
+[patches][pyspark-namedtuple]
 `collections.namedtuple` to have a custom implementation of the pickle protocol
 which exposes the name of the class, **the field names** and the corresponding
-values. This changes makes all namedtuple instances picklable in an
+values. This change makes all namedtuple instances picklable in an
 easy-to-unpickle format. To unpickle a namedtuple instance, the executor would
 have to
 
@@ -223,14 +232,31 @@ namedtuples
 <class 'collections.Summary'>
 ```
 
-This happens because `namedtuple` dynamically [infers][namedtuple-__module__]
-for the defined class from the stack frame preceding the `namedtuple`
-call. Without the patch this stack frame points to the module calling
-`collections.namedtuple` (`__main__` if called from the interpreter). With the
-patch however, there is an [extra][pyspark-namedtuple-extra] function call
-from the `collections` module.
+#### Why patch the `__code__`?
 
-The `typing.NamedTuple` version is not affected by this quirk, because a class
+The [PR][pyspark-namedtuple-pr] introducing the patch initially implemented a
+cleaner approach without `__code__` hacking, however, one of the reviewers
+pointed out that if `pyspark` is imported **after** `collections.namedtuple`,
+the patch would have no effect:
+
+```python
+from collections import namedtuple
+import pyspark
+
+Summary = namedtuple(...)
+```
+
+#### Why does `Summary` have `collections` as `__module__`?
+
+This happens because `namedtuple` dynamically [infers][namedtuple-__module__]
+the value of `__module__` from the frame preceding the `namedtuple` call in the
+stack. Without the patch the frame points to the module calling
+`collections.namedtuple` (for example, `__main__` if called from the
+interpreter). With the patch however, there is an
+[extra][pyspark-namedtuple-extra] function call from inside the `collections`
+module.
+
+The `typing.NamedTuple` version is not affected by this quirk because a class
 definition has the correct `__module__` set at class compilation time.
 
 ### Sidenote #2:
@@ -266,22 +292,17 @@ AttributeError: Can't get attribute 'Dummy' on <module 'pyspark.daemon' from '[.
 Finale
 ------
 
-Is the patch necessary? It's hard to say. On one hand, it makes pickling "just
-work" for 99% of the use-cases which are namedtuples with no methods. On the
-other:
+Is the patch necessary? It's hard to say. On the one hand, it makes pickling
+"just work" for 99% of the use-cases which are namedtuples with no methods. On
+the other:
 
 * it incurs a performance penalty,
-* it does the *wrong* thing for namedtuples with methods,
-* it complicates the debugging by patching the __code__/__globals__ of
+* it does the **wrong** thing for namedtuples with custom methods,
+* it complicates the debugging by patching the `__code__`/`__globals__` of
   `collections.namedtuple`.
 
 As a PySpark user I would prefer for it to be at the minimum opt-in, and
-clearly documented; or better yet -- entirely removed from the codebase.
-
-<!--
-The PR introducing the patch has no concerns on the destructive behaviour...
-https://github.com/apache/spark/pull/1623
--->
+clearly documented, or better yet &mdash; removed entirely from the codebase.
 
 P. S.
 -----
@@ -307,3 +328,4 @@ del Summary.__reduce__
 [namedtuple-__module__]: https://github.com/python/cpython/blob/master/Lib/collections/__init__.py#L473
 [pyspark-namedtuple-extra]: https://github.com/apache/spark/blob/7a2ada223e14d09271a76091be0338b2d375081e/python/pyspark/serializers.py#L513
 [pyspark-namedtuple-comment]: https://github.com/apache/spark/blob/branch-2.2/python/pyspark/serializers.py#L427
+[pyspark-namedtuple-pr]: https://github.com/apache/spark/pull/1623
