@@ -1,14 +1,10 @@
 Title: PySpark silently breaks your namedtuples
 Date: 2018-02-25
-Category: spark, python, rant
+Category: programming
+Tags: spark, python, rant
 
 **tl;dr** you might want to stay away from using namedtuples with custom
 methods in your PySpark applications.
-
-Related reports in the PySpark JIRA:
-
-* [SPARK-22674](https://issues.apache.org/jira/browse/SPARK-22674)
-* [SPARK-22338](https://issues.apache.org/jira/browse/SPARK-22338)
 
 Introduction
 ------------
@@ -323,9 +319,14 @@ Summary.__module__ = __name__  # Only needed for ``collections.namedtuple``.
 del Summary.__reduce__
 ```
 
----
+Links
+-----
 
-[Discussion][discussion] on /r/apachespark.
+* [Discussion][discussion] on /r/apachespark.
+* Related reports in the PySpark JIRA:
+  [SPARK-22674](https://issues.apache.org/jira/browse/SPARK-22674) and
+  [SPARK-22338](https://issues.apache.org/jira/browse/SPARK-22338).
+
 
 [pyspark]: https://spark.apache.org
 [namedtuple]: https://docs.python.org/3/library/collections.html#collections.namedtuple
