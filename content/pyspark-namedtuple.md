@@ -323,6 +323,10 @@ Summary.__module__ = __name__  # Only needed for ``collections.namedtuple``.
 del Summary.__reduce__
 ```
 
+---
+
+[Discussion][discussion] on /r/apachespark.
+
 [pyspark]: https://spark.apache.org
 [namedtuple]: https://docs.python.org/3/library/collections.html#collections.namedtuple
 [cpython-namedtuple]: https://github.com/python/cpython/search?l=Python&q=namedtuple&type=&utf8=%E2%9C%93
@@ -334,3 +338,4 @@ del Summary.__reduce__
 [pyspark-namedtuple-extra]: https://github.com/apache/spark/blob/7a2ada223e14d09271a76091be0338b2d375081e/python/pyspark/serializers.py#L513
 [pyspark-namedtuple-comment]: https://github.com/apache/spark/blob/branch-2.2/python/pyspark/serializers.py#L427
 [pyspark-namedtuple-pr]: https://github.com/apache/spark/pull/1623
+[discussion]: https://www.reddit.com/r/apachespark/comments/804rsf/pyspark_silently_breaks_your_namedtuples
