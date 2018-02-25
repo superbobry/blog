@@ -5,6 +5,11 @@ Category: spark, python, rant
 **tl;dr** you might want to stay away from using namedtuples with custom
 methods in your PySpark applications.
 
+Related reports in the PySpark JIRA:
+
+* [SPARK-22674](https://issues.apache.org/jira/browse/SPARK-22674)
+* [SPARK-22338](https://issues.apache.org/jira/browse/SPARK-22338)
+
 Introduction
 ------------
 
