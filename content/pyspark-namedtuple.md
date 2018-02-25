@@ -2,7 +2,7 @@ Title: PySpark silently breaks your namedtuples
 Date: 2018-02-25
 Category: spark, python, rant
 
-**tl;dr** you might want to stay away from using namedtuple with custom
+**tl;dr** you might want to stay away from using namedtuples with custom
 methods in your PySpark applications.
 
 Introduction
@@ -15,8 +15,8 @@ we are going to explore a peculiar quirk in the current (2.2.1) PySpark
 implementation &mdash; namedtuple serialization.
 
 [`collections.namedtuple`][namedtuple] is a concise way of defining *data
-classes*, that is immutable classes whose sole purpose is storing a bunch of
-values. For example,
+classes*, immutable classes whose sole purpose is storing a bunch of values. For
+example,
 
 ```python
 from collections import namedtuple
