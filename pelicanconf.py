@@ -8,7 +8,7 @@ SITENAME = "The blog"
 SITETITLE = "Hi."
 SITESUBTITLE = " ".join([
     "I am Sergei Lebedev.",
-    "I am a machine learning engineer at <a href='https://criteo.com'>Criteo</a>.",
+    "I work as a machine learning engineer at <a href='https://criteo.com'>Criteo</a>.",
     "This is my blog."
 ])
 SITEDESCRIPTION = "Sergei Lebedev's Thoughts and Writings"
