@@ -147,8 +147,8 @@ AttributeError: 'Summary' object has no attribute 'combine'
 
 Hmmm... not getting any better, `collections.Summary`? What is this
 `collections` module? We never created one, and even if had, the `Summary` class
-had been defined in the interpreter and therefore should have `__main__`
-as its module. So, what's going on?
+had been defined in the REPL and therefore should have `__main__` as its
+module. So, what's going on?
 
 I must warn you, the answer is not pretty.
 
@@ -277,9 +277,8 @@ b'\x80\x03cpyspark.serializers\n_restore\nq\x00X\x0b\x00\x00\x00RequestRateq\x01
 
 ### Sidenote #3:
 
-Normal (non-namedtuple) classes defined in the interpreter cannot be distributed
-within PySpark. Attempting to do so would lead to unhelpful, hard-to-understand
-errors
+Normal (non-namedtuple) classes defined in the REPL cannot be distributed within
+PySpark. Attempting to do so would lead to unhelpful, hard-to-understand errors
 
 ```python
 >>> class Dummy: pass
@@ -309,7 +308,7 @@ P. S.
 -----
 
 There is a way to easily undo the patch for namedtuples defined in modules (as
-opposed to the interpreter). These could be safely pickled/unpickled by the
+opposed to the REPL). These could be safely pickled/unpickled by the
 default implementation, so there is no reason to tolerate the performance drop
 introduced by PySpark.
 
