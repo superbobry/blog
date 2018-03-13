@@ -313,7 +313,7 @@ default implementation, so there is no reason to tolerate the performance drop
 introduced by PySpark.
 
 ```python
-Summary = Summary = namedtuple("Summary", ["min", "max"])
+Summary = namedtuple("Summary", ["min", "max"])
 Summary.__module__ = __name__  # Only needed for ``collections.namedtuple``.
 del Summary.__reduce__
 ```
