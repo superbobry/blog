@@ -3,26 +3,27 @@ Date: 2018-03-13
 Category: programming
 Tags: spark, tensorflow, python, rant
 
-**tl;dr** PySpark namedtuple serialization patch can break your TensorFlow
-code if you are using TensorFlowOnSpark.
-
 This blog post continues the exploration of the edge cases of the namedtuple
-serialization patch in PySpark. If you are lost or just want to catch up on
-the context, have a look at
-["PySpark silently breaks your namedtuples"][pyspark-namedtuple].
+patch in PySpark. If you are lost or just want to catch up on the context, have
+a look at ["PySpark silently breaks your namedtuples"][pyspark-namedtuple].
+
+**tl;dr** PySpark patches `collections.namedtuple` to make namedtuples
+picklable. However, the current implementation does not work well in the
+presence of inheritance, and could break third-party code in arbitrary
+ways, for example, TensorFlow when used via TensorFlowOnSpark.
 
 Introduction
 ------------
 
-[TensorFlowOnSpark][tf-on-spark] is a Python library which allows to distribute
-the training and inference of TensorFlow models using Spark. If you are familiar
+[TensorFlowOnSpark][tf-on-spark] is a Python library for distributing the
+training and inference of TensorFlow models using Spark. If you are familiar
 with the way distributed TensorFlow works, you might be surprised: "Why use
 Spark at all?". The answer is out of scope of this blogpost, so if you are truly
-wondering the project [`README`][why-tf-on-spark] has a list of (controversial)
-reasons for bridging the two.
+wondering the project [`README`][why-tf-on-spark] list some of the reasons for
+bridging the two.
 
-In the following, we will look at how TensorFlow is affected by the namedtuple
-serialization patch, and what we can do about it.
+In the following, we will look at how TensorFlow is affected by the Pyspark
+namedtuple patch, and what we can do about it.
 
 How does TensorFlowOnSpark work? Roughly, to launch a distributed training,
 
@@ -33,15 +34,17 @@ How does TensorFlowOnSpark work? Roughly, to launch a distributed training,
 3. Finally, the `train` function configures the environment for starting a
    TensorFlow worker (or a parameter server), and calls the user code.
 
+which can be summarized in a one-liner
+
 ```python
 sc.parallelize(range(num_executors), numSlices=num_executors) \
     .foreachPartition(train(...))
 ```
 
 Since our goal is not to explore the internals of TensorFlowOnSpark, we will
-leave TensorFlowOnSpark out of the picture, and instead use custom code for
-the `train` function. That said, all we would do transitively applies to any
-TensorFlowOnSpark code.
+leave TensorFlowOnSpark out of the picture, and will instead use the one-liner
+with custom code in place of the `train` function. That said, most of our
+findings apply to any PySpark application using TensorFlowOnSpark.
 
 The problem
 -----------
@@ -120,10 +123,18 @@ And of course, this is where things get interesting. The `_NumericColumn` is a
 `_FeatureColumn` on the driver, but not so on the executors. The namedtuple
 patch strikes again!
 
+### Sidenote
+
+TensorFlowOnSpark encourages the users to do all the imports/model definition in
+a function (see the MNIST [example][tf-on-spark-mnist]). This ensures that
+TensorFlow objects do not accidentally cross the serialization boundary as part
+of the closure. Therefore, the issue we have encountered is a bit artificial and
+(probably) hard to come by in real TensorFlowOnSpark code.
+
 The patch revisited
 -------------------
 
-Before we move a on, a quick summary of our previous findings:
+Before we move on, a quick summary of the findings from last time:
 
 * The goal of the patch is to make all namedtuples picklable in a format which
   would allow the executors to reconstruct the namedtuple definition even if the
@@ -137,7 +148,7 @@ Before we move a on, a quick summary of our previous findings:
 Back to `_NumericColumn`. A lot of TensorFlow classes, `_NumericColumn`
 [included][numeric-column], inherit from `collections.namedtuple` to reduce the
 boilerplate in class definitions. You could see a trace of this in the
-method-resolution-order
+[method resolution order][mro] *aka* the MRO
 
 ```python
 >>> fc._NumericColumn.mro()
@@ -154,8 +165,8 @@ This alone, however, does not break the inheritance relation between
 MRO for the driver version of the class. What does break it, is the custom
 pickling behaviour added by PySpark.
 
-Think about how an instance of `_NumericColumn` is pickled. The `pickle`
-implementation would attempt to lookup the `__reduce__` method in the
+Think about what happens when an instance of `_NumericColumn` is pickled. The
+`pickle` implementation would attempt to lookup the `__reduce__` method in the
 `_NumericColumn` hierarchy. To do this, it would traverse the hierarchy in MRO
 and stop at the first class defining the method. The MRO for `_NumericColumn`
 contains two eligible classes:
@@ -169,8 +180,8 @@ contains two eligible classes:
 However, since `collections._NumericColumn` is before `object` in the MRO,
 pickle would always use its`__reduce__` implementation and **not** the default
 one in `object`. Note also that `collections._NumericColumn.__reduce__` has no
-idea about the higher levels of the hierarchy it is part of, and will therefore
-try to pickle the instance is if it was just a `collections._NumericColumn`.
+idea about the lower levels of the hierarchy it is part of, and will therefore
+try to pickle the instance as if it was just a `collections._NumericColumn`.
 
 ```python
 >>> serialized = pickle.dumps(*feature_columns)
@@ -202,21 +213,22 @@ del collections._old_namedtuple_kwdefaults
 ```
 
 Caveats:
-* This code needs to be executed both on the driver and the executors
-* Any namedtuples defined before executing the revert will need to be
+
+* The revert needs to be executed both on the driver and on the executors.
+* Any namedtuples defined prior to executing the revert will need to be
   postprocessed manually by removing the `__reduce__` method and setting
   `__module__` to the correct value. Therefore, it is crucial to apply
-  the revert  **before** loading any standard library/third-party code
+  the revert  **before** importing any standard library/third-party code
   involving namedtuples.
 
 Conclusion
 ----------
 
-Namedtuples are hard to avoid when working with real-world Python code.
-Yet the namedtuple serialization patch in PySpark makes the experience
-of using them much less enjoyable. It is capable of causing unexpected,
-hard to diagnose failures in your PySpark application, as we have seen
-in the case of TensorFlow feature columns.
+The namedtuple patch in PySpark is not pretty. Designed to fix pickling
+of namedtuples defined in the REPL, it does more than that, and
+is in fact capable of causing unexpected, hard to diagnose failures in
+PySpark applications using namedtuples, as we have seen in the case of
+TensorFlow feature columns.
 
 If you have experienced similar issues with PySpark, feel free to join the
 [discussion][SPARK-22674] on the Spark JIRA.
@@ -225,6 +237,8 @@ If you have experienced similar issues with PySpark, feel free to join the
 [tf-on-spark]: https://github.com/yahoo/TensorFlowOnSpark
 [why-tf-on-spark]: https://github.com/yahoo/TensorFlowOnSpark#why-tensorflowonspark
 [tf-on-spark-train]: https://github.com/yahoo/TensorFlowOnSpark/blob/bc8bddd5d4f12665d8c9a5195ba6631eacaed7af/tensorflowonspark/TFCluster.py#L54
+[tf-on-spark-mnist]: https://github.com/yahoo/TensorFlowOnSpark/blob/bc8bddd5d4f12665d8c9a5195ba6631eacaed7af/examples/mnist/tf/mnist_dist.py#L15
 [feature-columns]: https://www.tensorflow.org/get_started/feature_columns
 [numeric-column]: https://github.com/tensorflow/tensorflow/blob/f47b6c9ec5e6c4561a6ed97ef2342ea737dcd80c/tensorflow/python/feature_column/feature_column.py#L2031
+[mro]: http://python-history.blogspot.fr/2010/06/method-resolution-order.html
 [SPARK-22674]: https://issues.apache.org/jira/browse/SPARK-22674
