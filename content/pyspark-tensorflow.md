@@ -235,7 +235,7 @@ TensorFlow feature columns.
 If you have experienced similar issues with PySpark, feel free to join the
 [discussion][SPARK-22674] on the Spark JIRA.
 
-[pyspark-namedtuple]: {filename}../pyspark-namedtuple.md
+[pyspark-namedtuple]: {filename}./pyspark-namedtuple.md
 [tf-on-spark]: https://github.com/yahoo/TensorFlowOnSpark
 [why-tf-on-spark]: https://github.com/yahoo/TensorFlowOnSpark#why-tensorflowonspark
 [tf-on-spark-train]: https://github.com/yahoo/TensorFlowOnSpark/blob/bc8bddd5d4f12665d8c9a5195ba6631eacaed7af/tensorflowonspark/TFCluster.py#L54
