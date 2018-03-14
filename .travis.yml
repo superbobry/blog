@@ -14,8 +14,7 @@ script:
 
 deploy:
   # See https://github.com/travis-ci/travis-ci/issues/9312
-  edge:
-    branch: v1.8.47
+  edge: true
   provider: pages
   repo: superbobry/superbobry.github.io
   target_branch: master
