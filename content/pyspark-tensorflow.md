@@ -231,8 +231,10 @@ is in fact capable of causing unexpected, hard to diagnose failures in
 PySpark applications using namedtuples, as we have seen in the case of
 TensorFlow feature columns.
 
-If you have experienced similar issues with PySpark, feel free to join the
-[discussion][SPARK-22674] on the Spark JIRA.
+If you have experienced similar issues with PySpark, feel free to share
+them in the relevant [ticket][SPARK-22674] on the Spark JIRA.
+
+[Discussion][discussion] on /r/apachespark.
 
 [pyspark-namedtuple]: {filename}./pyspark-namedtuple.md
 [tf-on-spark]: https://github.com/yahoo/TensorFlowOnSpark
@@ -243,3 +245,4 @@ If you have experienced similar issues with PySpark, feel free to join the
 [numeric-column]: https://github.com/tensorflow/tensorflow/blob/f47b6c9ec5e6c4561a6ed97ef2342ea737dcd80c/tensorflow/python/feature_column/feature_column.py#L2031
 [mro]: http://python-history.blogspot.fr/2010/06/method-resolution-order.html
 [SPARK-22674]: https://issues.apache.org/jira/browse/SPARK-22674
+[discussion]: https://www.reddit.com/r/apachespark/comments/84hb38/tensorflowonspark_or_the_namedtuple_patch_strikes/
