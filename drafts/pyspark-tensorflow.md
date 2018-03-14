@@ -50,7 +50,7 @@ The problem
 -----------
 
 [Feature columns][feature-columns] is one of the higher level APIs for defining
-machine learning models in TensorFlow. The foal of feature columns is to
+machine learning models in TensorFlow. The goal of feature columns is to
 transform and preprocess the raw data before plugging it into the model.
 A trivial identity model using just a single feature column might look something
 like:
@@ -193,8 +193,8 @@ This is exactly what is happening when the `feature_columns` are serialized
 to be passed to `check_feature_columns`. Hopefully, now the `False` we get
 when executing `check_feature_columns` on the executors makes sense.
 
-The revert
-----------
+Undoing the patch step-by-step
+------------------------------
 
 The dynamic nature of Python makes even the wildest dreams possible (which in
 part explains the existence of the patch in question). Specifically, it allows
@@ -214,12 +214,14 @@ del collections._old_namedtuple_kwdefaults
 
 Caveats:
 
-* The revert needs to be executed both on the driver and on the executors.
-* Any namedtuples defined prior to executing the revert will need to be
+* The undo code needs to be executed both on the driver and on the executors.
+* Any namedtuples defined prior to executing the undo code will need to be
   postprocessed manually by removing the `__reduce__` method and setting
   `__module__` to the correct value. Therefore, it is crucial to apply
   the revert  **before** importing any standard library/third-party code
   involving namedtuples.
+* After the undo code has been ran, the driver would not be able to unpickle
+  the namedtuples defined in the REPL.
 
 Conclusion
 ----------
