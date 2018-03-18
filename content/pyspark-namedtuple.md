@@ -190,7 +190,7 @@ At import time PySpark
 [patches][pyspark-namedtuple]
 `collections.namedtuple` to have a custom implementation of the pickle protocol
 which exposes the name of the class, **the field names** and the corresponding
-values. This change makes all namedtuple instances picklable in an
+values. This change makes all namedtuple instances pickleable in an
 easy-to-unpickle format. To unpickle a namedtuple instance, the executor would
 have to
 
@@ -260,7 +260,7 @@ module.
 The `typing.NamedTuple` version is not affected by this quirk because a class
 definition has the correct `__module__` set at class compilation time.
 
-### Sidenote #2:
+### Sidenote #2
 
 The patch makes the pickled representation of **every** namedtuple instance
 redundant, since it puts the field names alongside the values. Despite the
@@ -275,7 +275,7 @@ affected.
 b'\x80\x03cpyspark.serializers\n_restore\nq\x00X\x0b\x00\x00\x00RequestRateq\x01X\x08\x00\x00\x00requestsq\x02X\x07\x00\x00\x00secondsq\x03\x86q\x04K\x01K<\x86q\x05\x87q\x06Rq\x07.'
 ```
 
-### Sidenote #3:
+### Sidenote #3
 
 Normal (non-namedtuple) classes defined in the REPL cannot be distributed within
 PySpark. Attempting to do so would lead to unhelpful, hard-to-understand errors

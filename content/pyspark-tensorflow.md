@@ -8,9 +8,9 @@ patch in PySpark. If you are lost or just want to catch up on the context, have
 a look at ["PySpark silently breaks your namedtuples"][pyspark-namedtuple].
 
 **tl;dr** PySpark patches `collections.namedtuple` to make namedtuples
-picklable. However, the current implementation does not work well in the
+pickleable. However, the current implementation does not work well in the
 presence of inheritance, and could break third-party code in arbitrary
-ways, for example, TensorFlow when used via TensorFlowOnSpark.
+ways. For example, it breaks TensorFlow when used via TensorFlowOnSpark.
 
 Introduction
 ------------
@@ -19,8 +19,8 @@ Introduction
 training and inference of TensorFlow models using Spark. If you are familiar
 with the way distributed TensorFlow works, you might be surprised: "Why use
 Spark at all?". The answer is out of scope of this blogpost, so if you are truly
-wondering the project [`README`][why-tf-on-spark] list some of the reasons for
-bridging the two.
+wondering the project [`README`][why-tf-on-spark] lists some of the reasons
+for bridging the two.
 
 In the following, we will look at how TensorFlow is affected by the Pyspark
 namedtuple patch, and what we can do about it.
@@ -136,7 +136,7 @@ The patch revisited
 
 Before we move on, a quick summary of the findings from last time:
 
-* The goal of the patch is to make all namedtuples picklable in a format which
+* The goal of the patch is to make all namedtuples pickleable in a format which
   would allow the executors to reconstruct the namedtuple definition even if the
   namedtuple has been defined in the REPL, *aka* the interactive shell.
 * The patch equally affects user-defined namedtuples and the ones used by the
@@ -190,8 +190,8 @@ try to pickle the instance as if it was just a `collections._NumericColumn`.
 ```
 
 This is exactly what is happening when the `feature_columns` are serialized
-to be passed to `check_feature_columns`. Hopefully, now the `False` we get
-when executing `check_feature_columns` on the executors makes sense.
+to be passed to `check_feature_columns`. Hopefully, now the `False` we got
+as a result of running `check_feature_columns` on the executors makes sense.
 
 Reverting the patch step-by-step
 --------------------------------
@@ -228,7 +228,7 @@ Conclusion
 The namedtuple patch in PySpark is not pretty. Designed to fix pickling
 of namedtuples defined in the REPL, it does more than that, and
 is in fact capable of causing unexpected, hard to diagnose failures in
-PySpark applications using namedtuples, as we have seen in the case of
+PySpark applications that use namedtuples, as we have seen in the case of
 TensorFlow feature columns.
 
 If you have experienced similar issues with PySpark, feel free to share
