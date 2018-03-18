@@ -13,8 +13,6 @@ script:
 - make publish
 
 deploy:
-  # See https://github.com/travis-ci/travis-ci/issues/9312
-  edge: true
   provider: pages
   repo: superbobry/superbobry.github.io
   target_branch: master
