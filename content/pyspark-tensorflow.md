@@ -201,14 +201,13 @@ part explains the existence of the patch in question). Specifically, it allows
 us to revert the patch the same way it was applied.
 
 ```python
-import collections
-
-import pyspark  # Force the patch.
-
-collections.namedtuple.__code__ = collections._old_namedtuple.__code__
-del collections.namedtuple.__hijack
-del collections._old_namedtuple
-del collections._old_namedtuple_kwdefaults
+def revert_namedtuple_patch():
+    import pyspark  # Force the patch.
+    import collections
+    collections.namedtuple.__code__ = collections._old_namedtuple.__code__
+    del collections.namedtuple.__hijack
+    del collections._old_namedtuple
+    del collections._old_namedtuple_kwdefaults
 ```
 
 Caveats:
