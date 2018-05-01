@@ -15,8 +15,9 @@ script:
 deploy:
   provider: pages
   repo: superbobry/superbobry.github.io
-  target_branch: master
-  skip_cleanup: true
+  target-branch: master
+  skip-cleanup: true
+  keep-history: true
   github_token: $GITHUB_TOKEN
   local_dir: output
   on:
